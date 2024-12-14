@@ -1,0 +1,177 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/tabulator-tables@5.0.7/dist/js/tabulator.min.js"></script>
+    <link href="https://unpkg.com/tabulator-tables@5.0.7/dist/css/tabulator.min.css" rel="stylesheet">
+</head>
+<body class="font-roboto bg-gray-100 p-4">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold mb-4">Task Management</h1>
+
+       <!-- Search Bar -->
+            <div class="mb-4">
+                <label for="searchInput" class="block text-sm font-medium text-gray-700">Search Tasks</label>
+                <div class="flex">
+                    <input type="text" id="searchInput" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <button id="searchButton" class="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Search</button>
+                </div>
+            </div>
+
+        <!-- Task Counters -->
+        <div class="flex justify-between mb-4">
+            <div class="bg-white shadow rounded-lg p-4 w-1/3">
+                <h3 class="text-lg font-semibold">To Do</h3>
+                <p id="todoCount" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-white shadow rounded-lg p-4 w-1/3">
+                <h3 class="text-lg font-semibold">In Progress</h3>
+                <p id="inProgressCount" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-white shadow rounded-lg p-4 w-1/3">
+                <h3 class="text-lg font-semibold">Done</h3>
+                <p id="doneCount" class="text-2xl font-bold">0</p>
+            </div>
+        </div>
+
+        <!-- Task Filter -->
+        <div class="mb-4">
+            <label for="statusFilter" class="block text-sm font-medium text-gray-700">Filter by Status</label>
+            <select id="statusFilter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                <option value="">All</option>
+                <option value="To Do">To Do</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Done">Done</option>
+            </select>
+        </div>
+
+        <!-- Add New Task Form -->
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">Add New Task</h2>
+            <form id="addTaskForm" class="space-y-4">
+                <div>
+                    <label for="taskTitle" class="block text-sm font-medium text-gray-700">Title</label>
+                    <input type="text" id="taskTitle" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                </div>
+                <div>
+                    <label for="taskDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea id="taskDescription" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></textarea>
+                </div>
+                <div>
+                    <label for="taskStatus" class="block text-sm font-medium text-gray-700">Status</label>
+                    <select id="taskStatus" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="To Do">To Do</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                </div>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Add Task</button>
+            </form>
+        </div>
+
+        <!-- Task Table -->
+        <div id="taskTable" class="mb-4"></div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg opacity-0 transition-opacity duration-300">
+        <p id="toastMessage"></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Tabulator
+            var table = new Tabulator("#taskTable", {
+                layout: "fitColumns",
+                columns: [
+                    { title: "Task ID", field: "id", editor: false },
+                    { title: "Title", field: "title", editor: "input" },
+                    { title: "Description", field: "description", editor: "textarea" },
+                    { title: "Status", field: "status", editor: "select", editorParams: { values: ["To Do", "In Progress", "Done"] } },
+                    { formatter: "buttonCross", width: 40, align: "center", cellClick: function (e, cell) { cell.getRow().delete(); updateTaskCounters(); showToast("Task deleted successfully"); } }
+                ],
+                ajaxURL: "https://jsonplaceholder.typicode.com/todos",
+                ajaxResponse: function (url, params, response) {
+                    return response.slice(0, 20).map(task => ({
+                        id: task.id,
+                        title: task.title,
+                        description: "Sample description for task " + task.id,
+                        status: task.completed ? "Done" : "To Do"
+                    }));
+                },
+                cellEdited: function (cell) {
+                    updateTaskCounters();
+                    showToast("Task updated successfully");
+                }
+            });
+
+            // Add Task Form Submission
+            document.getElementById('addTaskForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                var title = document.getElementById('taskTitle').value;
+                var description = document.getElementById('taskDescription').value;
+                var status = document.getElementById('taskStatus').value;
+
+                // Get the current data from the table
+                var data = table.getData();
+                // Determine the next ID by finding the maximum ID in the current data
+                var nextId = data.length > 0 ? Math.max(...data.map(task => task.id)) + 1 : 1;
+
+                // Add the new task with the calculated ID
+                table.addRow({ id: nextId, title: title, description: description, status: status });
+                this.reset();
+                updateTaskCounters();
+                showToast("Task added successfully");
+            });
+
+            // Task Filter
+            document.getElementById('statusFilter').addEventListener('change', function () {
+                var filterValue = this.value;
+                if (filterValue) {
+                    table.setFilter("status", "=", filterValue);
+                } else {
+                    table.clearFilter();
+                }
+            });
+
+           // Search Tasks
+            document.getElementById('searchButton').addEventListener('click', function () {
+                var searchValue = document.getElementById('searchInput').value;
+                table.setFilter([
+                    { field: "title", type: "like", value: searchValue },
+                    { field: "description", type: "like", value: searchValue }
+                ]);
+            });
+
+            // Update Task Counters
+            function updateTaskCounters() {
+                var data = table.getData();
+                var todoCount = data.filter(task => task.status === "To Do").length;
+                var inProgressCount = data.filter(task => task.status === "In Progress").length;
+                var doneCount = data.filter(task => task.status === "Done").length;
+
+                document.getElementById('todoCount'). textContent = todoCount;
+                document.getElementById('inProgressCount').textContent = inProgressCount;
+                document.getElementById('doneCount').textContent = doneCount;
+            }
+
+            // Show Toast Notification
+            function showToast(message) {
+                var toast = document.getElementById('toast');
+                var toastMessage = document.getElementById('toastMessage');
+                toastMessage.textContent = message;
+                toast.classList.remove('opacity-0');
+                toast.classList.add('opacity-100');
+                setTimeout(function () {
+                    toast.classList.remove('opacity-100');
+                    toast.classList.add('opacity-0');
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
