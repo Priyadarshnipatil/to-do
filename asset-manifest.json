@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/Priyadarshnipatil/to-do/static/css/main.073c9b0a.css",
+    "main.js": "/Priyadarshnipatil/to-do/static/js/main.b4cd7ee6.js",
+    "static/js/787.a5cad257.chunk.js": "/Priyadarshnipatil/to-do/static/js/787.a5cad257.chunk.js",
+    "index.html": "/Priyadarshnipatil/to-do/index.html",
+    "main.073c9b0a.css.map": "/Priyadarshnipatil/to-do/static/css/main.073c9b0a.css.map",
+    "main.b4cd7ee6.js.map": "/Priyadarshnipatil/to-do/static/js/main.b4cd7ee6.js.map",
+    "787.a5cad257.chunk.js.map": "/Priyadarshnipatil/to-do/static/js/787.a5cad257.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.073c9b0a.css",
+    "static/js/main.b4cd7ee6.js"
+  ]
+}
